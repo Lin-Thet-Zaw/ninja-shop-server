@@ -12,6 +12,12 @@ public class AuthResponse {
         this.message = message;
     }
 
+    // Constructor that accepts only jwt
+    public AuthResponse(String jwt) {
+        this.jwt = jwt;
+        this.message = "Success";  // You can set a default message
+    }
+
     public String getJwt() {
         return jwt;
     }
@@ -28,3 +34,4 @@ public class AuthResponse {
         this.message = message;
     }
 }
+

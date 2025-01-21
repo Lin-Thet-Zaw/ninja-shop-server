@@ -17,6 +17,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -74,19 +75,29 @@ public class AuthController {
     }
 
     @PostMapping("/signin")
-    public ResponseEntity<AuthResponse> loginUserHandler(@RequestBody LoginRequest loginRequest){
+    public ResponseEntity<AuthResponse> loginUserHandler(@RequestBody LoginRequest loginRequest, BindingResult bindingResult){
+        // Check if there are validation errors
+        if (bindingResult.hasErrors()) {
+            // Collect all the validation error messages
+            StringBuilder errorMessage = new StringBuilder("Validation failed: ");
+            bindingResult.getAllErrors().forEach(error -> errorMessage.append(error.getDefaultMessage()).append(" "));
+            return new ResponseEntity<>(new AuthResponse(null, errorMessage.toString()), HttpStatus.BAD_REQUEST);
+        }
 
         String username = loginRequest.getEmail();
         String password = loginRequest.getPassword();
+        try{
+            Authentication authentication = authenticate(username, password);
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+            String token = jwtProvider.generateToken(authentication);
+            AuthResponse authResponse = new AuthResponse();
+            authResponse.setJwt(token);
+            authResponse.setMessage("Signin Success");
 
-        Authentication authentication = authenticate(username, password);
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-        String token = jwtProvider.generateToken(authentication);
-        AuthResponse authResponse = new AuthResponse();
-        authResponse.setJwt(token);
-        authResponse.setMessage("Signin Success");
-
-        return new ResponseEntity<AuthResponse>(authResponse,HttpStatus.CREATED);
+            return new ResponseEntity<AuthResponse>(authResponse,HttpStatus.CREATED);
+        }catch(BadCredentialsException e){
+            return new ResponseEntity<AuthResponse>(new AuthResponse(null,"Invalid username or password"), HttpStatus.UNAUTHORIZED);
+        }
     }
 
     public Authentication authenticate(String username, String password){
