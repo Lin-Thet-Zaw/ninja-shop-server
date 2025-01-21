@@ -2,6 +2,10 @@ package com.ninjashop.ninjashop.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -13,13 +17,26 @@ public class User {
     @Id
     @GeneratedValue(strategy =  GenerationType.AUTO)
     private  Long id;
+    
+    @NotBlank(message = "First name is required")
+    private String firstName;
 
-    private  String firstName;
-    private  String lastName;
-    private  String password;
-    private  String email;
-    private  String role;
-    private  String mobile;
+    @NotBlank(message = "Last name is required")
+    private String lastName;
+
+    @NotBlank(message = "Password is required")
+    @Size(min = 8, message = "Password must be at least 8 characters long")
+    @JsonIgnore
+    private String password;
+
+    @NotBlank(message = "Email is required")
+    @Email(message = "Email should be valid")
+    private String email;
+
+    private String role;
+
+    @Pattern(regexp = "^\\+?[0-9]{10,15}$", message = "Invalid mobile number format")
+    private String mobile;
 
     public String getPassword() {
         return password;
