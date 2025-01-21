@@ -41,62 +41,87 @@ public class AuthController {
     }
 
     @PostMapping("/signup")
-    public ResponseEntity<AuthResponse> createUserHandler(@RequestBody User user) throws UserException{
-        String email = user.getEmail();
-        String password = user.getPassword();
-        String firstName = user.getFirstName();
-        String lastName = user.getLastName();
-
-        User isEmailExist = userRepository.findByEmail(email);
-
-        if(isEmailExist != null){
-            throw new UserException("Email is used already with another account");
-        }
-
-        User createUser = new User();
-        createUser.setEmail(email);
-        createUser.setPassword(passwordEncoder.encode(password));
-        createUser.setFirstName(firstName);
-        createUser.setLastName(lastName);
-
-        User savedUser = userRepository.save(createUser);
-        Cart cart = cartService.createCart(savedUser);
-
-        Authentication authentication = new UsernamePasswordAuthenticationToken(savedUser.getEmail(),savedUser.getPassword());
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-
-        String token = jwtProvider.generateToken(authentication);
-        AuthResponse authResponse = new AuthResponse();
-        authResponse.setJwt(token);
-        authResponse.setMessage("Signup Success");
-
-        return new ResponseEntity<AuthResponse>(authResponse,HttpStatus.CREATED);
-
-    }
-
-    @PostMapping("/signin")
-    public ResponseEntity<AuthResponse> loginUserHandler(@RequestBody LoginRequest loginRequest, BindingResult bindingResult){
-        // Check if there are validation errors
+    public ResponseEntity<AuthResponse> createUserHandler(@RequestBody User user, BindingResult bindingResult) throws UserException {
+        // Check for validation errors
         if (bindingResult.hasErrors()) {
-            // Collect all the validation error messages
-            StringBuilder errorMessage = new StringBuilder("Validation failed: ");
+            StringBuilder errorMessage = new StringBuilder("Signup validation failed: ");
             bindingResult.getAllErrors().forEach(error -> errorMessage.append(error.getDefaultMessage()).append(" "));
             return new ResponseEntity<>(new AuthResponse(null, errorMessage.toString()), HttpStatus.BAD_REQUEST);
         }
 
+        // Validate required fields
+        if (user.getEmail() == null || user.getEmail().isEmpty()) {
+            throw new UserException("Email is required");
+        }
+        if (user.getPassword() == null || user.getPassword().length() < 8) {
+            throw new UserException("Password must be at least 8 characters");
+        }
+        if (user.getFirstName() == null || user.getFirstName().isEmpty()) {
+            throw new UserException("First name is required");
+        }
+        if (user.getLastName() == null || user.getLastName().isEmpty()) {
+            throw new UserException("Last name is required");
+        }
+
+        // Check if email already exists
+        User isEmailExist = userRepository.findByEmail(user.getEmail());
+        if (isEmailExist != null) {
+            throw new UserException("Email is already in use with another account");
+        }
+
+        // Create and save user
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
+        User savedUser = userRepository.save(user);
+
+        // Create a cart for the user
+        Cart cart = cartService.createCart(savedUser);
+
+        // Generate JWT token
+        Authentication authentication = new UsernamePasswordAuthenticationToken(savedUser.getEmail(), savedUser.getPassword());
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+        String token = jwtProvider.generateToken(authentication);
+
+        // Return success response
+        AuthResponse authResponse = new AuthResponse();
+        authResponse.setJwt(token);
+        authResponse.setMessage("Signup successful");
+
+        return new ResponseEntity<>(authResponse, HttpStatus.CREATED);
+    }
+
+    @PostMapping("/signin")
+    public ResponseEntity<AuthResponse> loginUserHandler(@RequestBody LoginRequest loginRequest, BindingResult bindingResult) {
+        // Validate email and password presence
+        if (bindingResult.hasErrors()) {
+            StringBuilder errorMessage = new StringBuilder("Signin validation failed: ");
+            bindingResult.getAllErrors().forEach(error -> errorMessage.append(error.getDefaultMessage()).append(" "));
+            return new ResponseEntity<>(new AuthResponse(null, errorMessage.toString()), HttpStatus.BAD_REQUEST);
+        }
+
+        if (loginRequest.getEmail() == null || loginRequest.getEmail().isEmpty()) {
+            return new ResponseEntity<>(new AuthResponse(null, "Email is required"), HttpStatus.BAD_REQUEST);
+        }
+        if (loginRequest.getPassword() == null || loginRequest.getPassword().isEmpty()) {
+            return new ResponseEntity<>(new AuthResponse(null, "Password is required"), HttpStatus.BAD_REQUEST);
+        }
+
+        // Authenticate user
         String username = loginRequest.getEmail();
         String password = loginRequest.getPassword();
-        try{
+        try {
             Authentication authentication = authenticate(username, password);
             SecurityContextHolder.getContext().setAuthentication(authentication);
             String token = jwtProvider.generateToken(authentication);
+
+            // Return success response
             AuthResponse authResponse = new AuthResponse();
             authResponse.setJwt(token);
-            authResponse.setMessage("Signin Success");
+            authResponse.setMessage("Signin successful");
 
-            return new ResponseEntity<AuthResponse>(authResponse,HttpStatus.CREATED);
-        }catch(BadCredentialsException e){
-            return new ResponseEntity<AuthResponse>(new AuthResponse(null,"Invalid username or password"), HttpStatus.UNAUTHORIZED);
+            return new ResponseEntity<>(authResponse, HttpStatus.OK);
+        } catch (BadCredentialsException e) {
+            // Return invalid credentials response
+            return new ResponseEntity<>(new AuthResponse(null, "Invalid email or password"), HttpStatus.UNAUTHORIZED);
         }
     }
 

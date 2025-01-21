@@ -17,7 +17,7 @@ public class User {
     @Id
     @GeneratedValue(strategy =  GenerationType.AUTO)
     private  Long id;
-    
+
     @NotBlank(message = "First name is required")
     private String firstName;
 
