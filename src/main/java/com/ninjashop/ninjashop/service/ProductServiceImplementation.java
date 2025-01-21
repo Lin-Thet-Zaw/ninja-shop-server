@@ -123,7 +123,7 @@ public class ProductServiceImplementation implements ProductService {
     }
 
     @Override
-    public Page<Product> getAllProduct(String category, List<String> colors, List<String> sizes, Integer minPrice, Integer maxPrice, Integer minDiscounted, String sort, String stock, Integer pageNumber, Integer pageSize) {
+    public Page<Product> getAllFilterProduct(String category, List<String> colors, List<String> sizes, Integer minPrice, Integer maxPrice, Integer minDiscounted, String sort, String stock, Integer pageNumber, Integer pageSize) {
         Pageable pageable = PageRequest.of(pageNumber, pageSize);
 
         // Fetch initial products list based on filter criteria

@@ -29,7 +29,7 @@ public class ProductController {
                                                                       @RequestParam Integer pageNumber,
                                                                       @RequestParam Integer pageSize
     ) {
-        Page<Product> res = productService.getAllProduct(category, color, size, minPrice, maxPrice, minDiscounted, sort, stock, pageNumber, pageSize);
+        Page<Product> res = productService.getAllFilterProduct(category, color, size, minPrice, maxPrice, minDiscounted, sort, stock, pageNumber, pageSize);
         System.out.println("Product complete");
         return new ResponseEntity<>(res, HttpStatus.ACCEPTED);
     }
