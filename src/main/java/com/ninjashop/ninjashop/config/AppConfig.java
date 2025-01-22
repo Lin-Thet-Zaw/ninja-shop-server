@@ -34,7 +34,9 @@ public class AppConfig {
                         cfg.setAllowedOrigins(Arrays.asList(
                                 "http://localhost:3000",
                                 "http://localhost:4200",
-                                "https://ninjashop-ecommerceappfrontend.vercel.app"
+                                "https://ninjashop-ecommerceappfrontend.vercel.app",
+                                "https://ninja-shop.vercel.app",
+                                "https://ecommerce-woad-omega-55.vercel.app"
                         ));
                         cfg.setAllowedMethods(Collections.singletonList("*"));
                         cfg.setAllowCredentials(true);
