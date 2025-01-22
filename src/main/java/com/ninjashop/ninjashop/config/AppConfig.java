@@ -23,6 +23,8 @@ public class AppConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and()
                 .authorizeHttpRequests(Authorize ->Authorize
+                        // Allow access to all product routes without authentication
+                        .requestMatchers("/api/products", "/api/products/**").permitAll()
                         .requestMatchers("/api/**").authenticated()
                         .anyRequest().permitAll())
                 .addFilterBefore(new JwtValidator(), BasicAuthenticationFilter.class)
