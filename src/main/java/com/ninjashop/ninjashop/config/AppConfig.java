@@ -22,10 +22,13 @@ public class AppConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and()
-                .authorizeHttpRequests(Authorize ->Authorize
-                        // Allow access to all product routes without authentication
-                        .requestMatchers("/api/products", "/api/products/**").permitAll()
-                        .requestMatchers("/api/**").authenticated()
+                .authorizeHttpRequests(Authorize -> Authorize
+                        // Allow access to specific routes without authentication
+//                        .requestMatchers("/api/products", "/api/products/**").permitAll()
+//                        .requestMatchers("/api/products/category").permitAll() // Make sure to add this line
+                        .requestMatchers("/api/cart/**").authenticated()
+                        .requestMatchers("/api/admin/**").authenticated()
+                        .requestMatchers("/api/orders/**").authenticated()
                         .anyRequest().permitAll())
                 .addFilterBefore(new JwtValidator(), BasicAuthenticationFilter.class)
                 .csrf().disable()

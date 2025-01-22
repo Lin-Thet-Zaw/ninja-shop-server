@@ -35,6 +35,11 @@ public class ProductServiceImplementation implements ProductService {
     }
 
     @Override
+    public List<Product> findProductsByCategory(String category) {
+        return productRepository.findByCategory_Name(category);
+    }
+
+    @Override
     public List<Product> findAllProducts() {
         return productRepository.findAll();
     }

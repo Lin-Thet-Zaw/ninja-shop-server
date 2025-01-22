@@ -5,7 +5,6 @@ import com.ninjashop.ninjashop.model.Product;
 import com.ninjashop.ninjashop.service.ProductService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -45,6 +44,19 @@ public class ProductController {
     public ResponseEntity<List<Product>> getAllProducts() {
         try {
             List<Product> products = productService.findAllProducts();
+            return new ResponseEntity<>(products, HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    // New endpoint to filter by category only
+    @GetMapping("/products/category")
+    public ResponseEntity<List<Product>> findProductsByCategory(
+            @RequestParam String category
+    ) {
+        try {
+            List<Product> products = productService.findProductsByCategory(category);
             return new ResponseEntity<>(products, HttpStatus.OK);
         } catch (Exception e) {
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);

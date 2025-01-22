@@ -8,6 +8,8 @@ import org.springframework.data.domain.Page;
 import java.util.List;
 
 public interface ProductService {
+    // Method to get products by category
+    public List<Product> findProductsByCategory(String category);
     public List<Product> findAllProducts();
     public Product createProduct(CreateProductRequest req);
     public String deleteProduct(Long productId) throws ProductException;
