@@ -23,7 +23,7 @@ public class AppConfig {
         http.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and()
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers("/api/admin/**").authenticated() // Require authentication for admin endpoints
-                        .requestMatchers("/api/products/all").permitAll() // Allow access to /api/products/all without authentication
+//                        .requestMatchers("/api/products/all").permitAll() // Allow access to /api/products/all without authentication
                         .anyRequest().permitAll() // Allow all other requests
                 )
                 .addFilterBefore(new JwtValidator(), BasicAuthenticationFilter.class)
