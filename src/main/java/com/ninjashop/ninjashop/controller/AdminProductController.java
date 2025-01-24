@@ -1,27 +1,25 @@
 package com.ninjashop.ninjashop.controller;
 
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ninjashop.ninjashop.exception.ProductException;
 import com.ninjashop.ninjashop.exception.UserException;
 import com.ninjashop.ninjashop.model.Product;
+import com.ninjashop.ninjashop.model.Size;
 import com.ninjashop.ninjashop.model.User;
 import com.ninjashop.ninjashop.request.CreateProductRequest;
 import com.ninjashop.ninjashop.response.ApiResponse;
 import com.ninjashop.ninjashop.service.ProductService;
 import com.ninjashop.ninjashop.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
-
+import com.fasterxml.jackson.core.type.TypeReference;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @RestController
 @RequestMapping("/api/admin/products")
@@ -33,24 +31,21 @@ public class AdminProductController {
     @Autowired
     private UserService userService;
 
-    /**
-     * Endpoint to create a product with an image.
-     */
     @PostMapping("/")
     public ResponseEntity<Product> createProduct(
             @RequestParam("image") String image,
             @RequestParam("brand") String brand,
             @RequestParam("title") String title,
             @RequestParam("color") String color,
-            @RequestParam("discountedPrice") String discountedPriceStr, // Bind as String
-            @RequestParam("price") String priceStr, // Bind as String
-            @RequestParam("discountedPercent") String discountedPercentStr, // Bind as String
-            @RequestParam("quantity") String quantityStr, // Bind as String
+            @RequestParam("discountedPrice") String discountedPriceStr,
+            @RequestParam("price") String priceStr,
+            @RequestParam("discountedPercent") String discountedPercentStr,
+            @RequestParam("quantity") String quantityStr,
             @RequestParam("topLevelCategory") String topLevelCategory,
             @RequestParam("secondLevelCategory") String secondLevelCategory,
             @RequestParam("thirdLevelCategory") String thirdLevelCategory,
             @RequestParam("description") String description,
-            @RequestParam("size") String size,
+            @RequestParam("sizes") String sizesJson, // Accept sizes as JSON string
             @RequestHeader("Authorization") String jwt
     ) throws UserException, IOException {
         // Authenticate user
@@ -61,6 +56,9 @@ public class AdminProductController {
         int price = parseInteger(priceStr, 0);
         int discountedPercent = parseInteger(discountedPercentStr, 0);
         int quantity = parseInteger(quantityStr, 0);
+
+        // Parse sizes JSON string to Set<Size>
+        Set<Size> sizes = parseSizes(sizesJson);
 
         // Create the product request object
         CreateProductRequest req = new CreateProductRequest();
@@ -75,14 +73,36 @@ public class AdminProductController {
         req.setSecondLevelCategory(secondLevelCategory);
         req.setThirdLevelCategory(thirdLevelCategory);
         req.setDescription(description);
-        req.setSize(size);
+        req.setSizes(sizes); // Set the sizes directly
         req.setImageUrl(image); // Save the image path as URL
 
         // Save product to database
         Product product = productService.createProduct(req);
         return new ResponseEntity<>(product, HttpStatus.CREATED);
     }
-//    @Value("${upload.folder}")
+
+    private Set<Size> parseSizes(String sizesJson) {
+        ObjectMapper objectMapper = new ObjectMapper();
+        try {
+            // Parse JSON as List<Size> and convert to Set<Size> to remove duplicates
+            List<Size> sizeList = objectMapper.readValue(sizesJson, new TypeReference<List<Size>>() {});
+            return new HashSet<>(sizeList);
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to parse sizes JSON", e);
+        }
+    }
+
+    private int parseInteger(String value, int defaultValue) {
+        if (value == null || value.trim().isEmpty()) {
+            return defaultValue;
+        }
+        try {
+            return Integer.parseInt(value);
+        } catch (NumberFormatException e) {
+            return defaultValue;
+        }
+    }
+    //    @Value("${upload.folder}")
 //    private String uploadFolder;
 
 //    /**
@@ -138,19 +158,6 @@ public class AdminProductController {
 //        return new ResponseEntity<>(product, HttpStatus.CREATED);
 //    }
 //
-    /**
-     * Helper method to parse a string to an integer with a default value.
-     */
-    private int parseInteger(String value, int defaultValue) {
-        if (value == null || value.trim().isEmpty()) {
-            return defaultValue;
-        }
-        try {
-            return Integer.parseInt(value);
-        } catch (NumberFormatException e) {
-            return defaultValue;
-        }
-    }
 //
 //    /**
 //     * Save the uploaded image to the "static/products" folder.

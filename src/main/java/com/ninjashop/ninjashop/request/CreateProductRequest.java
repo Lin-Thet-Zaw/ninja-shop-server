@@ -2,23 +2,31 @@ package com.ninjashop.ninjashop.request;
 
 import com.ninjashop.ninjashop.model.Size;
 
-import java.util.HashSet;
 import java.util.Set;
 
 public class CreateProductRequest {
     private String title;
     private String description;
-    private  int price;
+    private int price;
     private int discountedPrice;
     private int discountedPercent;
     private int quantity;
     private String brand;
     private String color;
-    private Set<Size> sizes = new HashSet<>();
+    private Set<Size> sizes; // Use Set<Size> directly
     private String imageUrl;
     private String topLevelCategory;
     private String secondLevelCategory;
     private String thirdLevelCategory;
+
+    // Getters and Setters
+    public Set<Size> getSizes() {
+        return sizes;
+    }
+
+    public void setSizes(Set<Size> sizes) {
+        this.sizes = sizes;
+    }
 
     public String getTitle() {
         return title;
@@ -84,14 +92,6 @@ public class CreateProductRequest {
         this.color = color;
     }
 
-    public Set<Size> getSizes() {
-        return sizes;
-    }
-
-    public void setSizes(Set<Size> sizes) {
-        this.sizes = sizes;
-    }
-
     public String getImageUrl() {
         return imageUrl;
     }
@@ -124,6 +124,4 @@ public class CreateProductRequest {
         this.thirdLevelCategory = thirdLevelCategory;
     }
 
-    public void setSize(String size) {
-    }
 }
