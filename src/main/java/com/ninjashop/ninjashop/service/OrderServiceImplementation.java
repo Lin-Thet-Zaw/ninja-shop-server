@@ -10,6 +10,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Random;
 
 @Service
 public class OrderServiceImplementation implements OrderService {
@@ -35,6 +36,15 @@ public class OrderServiceImplementation implements OrderService {
         this.orderItemRepository = orderItemRepository;
     }
 
+    private String generateOrderTrackingCode() {
+        Random random = new Random();
+        String code;
+        do {
+            code = String.valueOf(random.nextInt(90000000) + 10000000); // Generates a random 8-digit number
+        } while (orderRepository.findByOrderId(code).isPresent()); // Check if the code already exists
+        return code;
+    }
+
     @Override
     public Order createOrder(User user, Address shippingAddress) {
         shippingAddress.setUser(user);
@@ -56,6 +66,7 @@ public class OrderServiceImplementation implements OrderService {
             OrderItem createOrderItem = orderItemRepository.save(orderItem);
             orderItems.add(createOrderItem);
         }
+
         Order createdOrder = new Order();
         createdOrder.setUser(user);
         createdOrder.setOrderItemList(orderItems);
@@ -69,12 +80,14 @@ public class OrderServiceImplementation implements OrderService {
         createdOrder.getPaymentDetails().setStatus("PENDING");
         createdOrder.setCreatedAt(LocalDateTime.now());
 
+        // Generate and set the order tracking code
+        createdOrder.setOrderId(generateOrderTrackingCode());
+
         Order savedOrder = orderRepository.save(createdOrder);
 
-        for(OrderItem item:orderItems){
+        for(OrderItem item: orderItems){
             item.setOrder(savedOrder);
             orderItemRepository.save(item);
-
         }
         return savedOrder;
     }
