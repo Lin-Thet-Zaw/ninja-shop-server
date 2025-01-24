@@ -1,6 +1,5 @@
 package com.ninjashop.ninjashop.config;
 
-import jakarta.servlet.Filter;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -13,18 +12,20 @@ import org.springframework.security.web.authentication.www.BasicAuthenticationFi
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 
-import java.time.Duration;
 import java.util.Arrays;
 import java.util.Collections;
 
 @Configuration
 public class AppConfig {
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and()
-                .authorizeHttpRequests(Authorize ->Authorize
-                        .requestMatchers("/api/admin/**").authenticated()
-                        .anyRequest().permitAll())
+                .authorizeHttpRequests(authorize -> authorize
+                        .requestMatchers("/api/admin/**").authenticated() // Require authentication for admin endpoints
+                        .requestMatchers("/api/products/all").permitAll() // Allow access to /api/products/all without authentication
+                        .anyRequest().permitAll() // Allow all other requests
+                )
                 .addFilterBefore(new JwtValidator(), BasicAuthenticationFilter.class)
                 .csrf().disable()
                 .cors().configurationSource(new CorsConfigurationSource() {

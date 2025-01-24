@@ -41,7 +41,13 @@ public class ProductServiceImplementation implements ProductService {
 
     @Override
     public List<Product> findAllProducts() {
-        return productRepository.findAll();
+        try {
+            return productRepository.findAll();
+        } catch (Exception e) {
+            // Log the exception for debugging
+            e.printStackTrace();
+            throw new RuntimeException("Failed to fetch products", e);
+        }
     }
 
     @Override

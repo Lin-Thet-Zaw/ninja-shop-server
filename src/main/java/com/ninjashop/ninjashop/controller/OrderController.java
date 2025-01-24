@@ -51,7 +51,7 @@ public class OrderController {
     @PutMapping("/{orderId}/comfirmed")
     public ResponseEntity<Order> comfirmedOrderHandler(@PathVariable Long orderId,
                                                        @RequestHeader("Authorization") String jwt) throws OrderException{
-        Order order = orderService.orderComfired(orderId);
+        Order order = orderService.placedOrder(orderId);
         return  new ResponseEntity<>(order,HttpStatus.OK);
     }
 }

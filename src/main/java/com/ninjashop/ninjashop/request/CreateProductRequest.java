@@ -123,4 +123,7 @@ public class CreateProductRequest {
     public void setThirdLevelCategory(String thirdLevelCategory) {
         this.thirdLevelCategory = thirdLevelCategory;
     }
+
+    public void setSize(String size) {
+    }
 }

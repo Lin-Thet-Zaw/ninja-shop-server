@@ -105,7 +105,7 @@ public class OrderServiceImplementation implements OrderService {
     @Override
     public Order orderComfired(Long orderId) throws OrderException {
         Order order = findOrderById(orderId);
-        order.setOrderStatus("COMFIRMED");
+        order.setOrderStatus("CONFIRMED");
 
         return orderRepository.save(order);
     }
