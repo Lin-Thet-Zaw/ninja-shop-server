@@ -15,9 +15,12 @@ public class Product {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
 
+    @Column(length = 255)
     private String title;
 
+    @Column(length = 255)
     private String description;
+
 
     private int price;
 
@@ -29,8 +32,10 @@ public class Product {
 
     private int quantity;
 
+    @Column(length = 255)
     private String brand;
 
+    @Column(length = 255)
     private String color;
 
     @Embedded

@@ -11,6 +11,7 @@ import com.ninjashop.ninjashop.request.CreateProductRequest;
 import com.ninjashop.ninjashop.response.ApiResponse;
 import com.ninjashop.ninjashop.service.ProductService;
 import com.ninjashop.ninjashop.service.UserService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -33,6 +34,7 @@ public class AdminProductController {
 
     @PostMapping("/")
     public ResponseEntity<Product> createProduct(
+            @Valid
             @RequestParam("image") String image,
             @RequestParam("brand") String brand,
             @RequestParam("title") String title,
