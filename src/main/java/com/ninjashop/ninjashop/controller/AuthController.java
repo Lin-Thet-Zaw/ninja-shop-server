@@ -45,46 +45,50 @@ public class AuthController {
 
     @PostMapping("/signup")
     public ResponseEntity<AuthResponse> createUserHandler(@Valid @RequestBody RegisterRequest user, BindingResult bindingResult) {
-        if (bindingResult.hasErrors()) {
-            StringBuilder errorMessage = new StringBuilder("Signup validation failed: ");
-            bindingResult.getAllErrors().forEach(error -> errorMessage.append(error.getDefaultMessage()).append(" "));
-            return new ResponseEntity<>(new AuthResponse(null, errorMessage.toString()), HttpStatus.BAD_REQUEST);
+        try {
+            if (bindingResult.hasErrors()) {
+                StringBuilder errorMessage = new StringBuilder("Signup validation failed: ");
+                bindingResult.getAllErrors().forEach(error -> errorMessage.append(error.getDefaultMessage()).append(" "));
+                return new ResponseEntity<>(new AuthResponse(null, errorMessage.toString()), HttpStatus.BAD_REQUEST);
+            }
+
+            // Check if email already exists
+            if (userRepository.findByEmail(user.getEmail()) != null) {
+                return new ResponseEntity<>(new AuthResponse(null, "Email is already in use with another account."), HttpStatus.CONFLICT);
+            }
+
+            // Create and save user
+            User newUser = new User();
+            newUser.setEmail(user.getEmail());
+            newUser.setPassword(passwordEncoder.encode(user.getPassword()));
+            newUser.setFirstName(user.getFirstName());
+            newUser.setLastName(user.getLastName());
+            User savedUser = userRepository.save(newUser);
+
+            // Create a cart for the user
+            Cart cart = cartService.createCart(savedUser);
+
+            // Generate JWT token
+            Authentication authentication = new UsernamePasswordAuthenticationToken(savedUser.getEmail(), savedUser.getPassword());
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+            String token = jwtProvider.generateToken(authentication);
+
+            AuthResponse authResponse = new AuthResponse(token, "Signup successful");
+            return new ResponseEntity<>(authResponse, HttpStatus.CREATED);
+        } catch (Exception e) {
+            return new ResponseEntity<>(new AuthResponse(null, "An error occurred during signup: " + e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
         }
-
-        // Check if email already exists
-        if (userRepository.findByEmail(user.getEmail()) != null) {
-            return new ResponseEntity<>(new AuthResponse(null, "Email is already in use with another account."), HttpStatus.CONFLICT);
-        }
-
-        // Create and save user
-        User newUser = new User();
-        newUser.setEmail(user.getEmail());
-        newUser.setPassword(passwordEncoder.encode(user.getPassword()));
-        newUser.setFirstName(user.getFirstName());
-        newUser.setLastName(user.getLastName());
-        User savedUser = userRepository.save(newUser);
-
-        // Create a cart for the user
-        Cart cart = cartService.createCart(savedUser);
-
-        // Generate JWT token
-        Authentication authentication = new UsernamePasswordAuthenticationToken(savedUser.getEmail(), savedUser.getPassword());
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-        String token = jwtProvider.generateToken(authentication);
-
-        AuthResponse authResponse = new AuthResponse(token, "Signup successful");
-        return new ResponseEntity<>(authResponse, HttpStatus.CREATED);
     }
 
     @PostMapping("/signin")
     public ResponseEntity<AuthResponse> loginUserHandler(@Valid @RequestBody LoginRequest loginRequest, BindingResult bindingResult) {
-        if (bindingResult.hasErrors()) {
-            StringBuilder errorMessage = new StringBuilder("Signin validation failed: ");
-            bindingResult.getAllErrors().forEach(error -> errorMessage.append(error.getDefaultMessage()).append(" "));
-            return new ResponseEntity<>(new AuthResponse(null, errorMessage.toString()), HttpStatus.BAD_REQUEST);
-        }
-
         try {
+            if (bindingResult.hasErrors()) {
+                StringBuilder errorMessage = new StringBuilder("Signin validation failed: ");
+                bindingResult.getAllErrors().forEach(error -> errorMessage.append(error.getDefaultMessage()).append(" "));
+                return new ResponseEntity<>(new AuthResponse(null, errorMessage.toString()), HttpStatus.BAD_REQUEST);
+            }
+
             Authentication authentication = authenticate(loginRequest.getEmail(), loginRequest.getPassword());
             SecurityContextHolder.getContext().setAuthentication(authentication);
             String token = jwtProvider.generateToken(authentication);
@@ -93,6 +97,8 @@ public class AuthController {
             return new ResponseEntity<>(authResponse, HttpStatus.OK);
         } catch (BadCredentialsException e) {
             return new ResponseEntity<>(new AuthResponse(null, "Invalid email or password."), HttpStatus.UNAUTHORIZED);
+        } catch (Exception e) {
+            return new ResponseEntity<>(new AuthResponse(null, "An error occurred during signin: " + e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
