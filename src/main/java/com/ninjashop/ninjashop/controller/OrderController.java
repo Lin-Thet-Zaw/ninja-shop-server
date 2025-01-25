@@ -23,35 +23,57 @@ public class OrderController {
     private UserService userService;
 
     @PostMapping("/")
-    public ResponseEntity<Order> createOrder(@RequestBody Address shippingAddress,
-                                             @RequestHeader("Authorization")String jwt) throws UserException {
-        User user = userService.findUserProfileByJwt(jwt);
-        Order order = orderService.createOrder(user, shippingAddress);
-        System.out.println(order);
-
-        return new ResponseEntity<>(order, HttpStatus.CREATED);
+    public ResponseEntity<?> createOrder(@RequestBody Address shippingAddress,
+                                         @RequestHeader("Authorization") String jwt) {
+        try {
+            User user = userService.findUserProfileByJwt(jwt);
+            Order order = orderService.createOrder(user, shippingAddress);
+            System.out.println(order);
+            return new ResponseEntity<>(order, HttpStatus.CREATED);
+        } catch (UserException e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+        } catch (Exception e) {
+            return new ResponseEntity<>("An error occurred while creating the order.", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
     @GetMapping("/user")
-    public ResponseEntity<List<Order>> userOrderHistoryLists(@RequestHeader("Authorization")String jwt) throws UserException{
-        User user = userService.findUserProfileByJwt(jwt);
-        List<Order> orders = orderService.userOrderHistoryLists(user.getId());
-
-        return new ResponseEntity<>(orders,HttpStatus.CREATED);
+    public ResponseEntity<?> userOrderHistoryLists(@RequestHeader("Authorization") String jwt) {
+        try {
+            User user = userService.findUserProfileByJwt(jwt);
+            List<Order> orders = orderService.userOrderHistoryLists(user.getId());
+            return new ResponseEntity<>(orders, HttpStatus.OK);
+        } catch (UserException e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+        } catch (Exception e) {
+            return new ResponseEntity<>("An error occurred while fetching the order history.", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Order> findOrderById(@PathVariable("id")Long orderId,
-                                               @RequestHeader("Authorization")String jwt) throws UserException, OrderException {
-        User user = userService.findUserProfileByJwt(jwt);
-        Order order = orderService.findOrderById(orderId);
-        return new ResponseEntity<>(order,HttpStatus.CREATED);
+    public ResponseEntity<?> findOrderById(@PathVariable("id") Long orderId,
+                                           @RequestHeader("Authorization") String jwt) {
+        try {
+            User user = userService.findUserProfileByJwt(jwt);
+            Order order = orderService.findOrderById(orderId);
+            return new ResponseEntity<>(order, HttpStatus.OK);
+        } catch (UserException | OrderException e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+        } catch (Exception e) {
+            return new ResponseEntity<>("An error occurred while fetching the order.", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
-    @PutMapping("/{orderId}/comfirmed")
-    public ResponseEntity<Order> comfirmedOrderHandler(@PathVariable Long orderId,
-                                                       @RequestHeader("Authorization") String jwt) throws OrderException{
-        Order order = orderService.placedOrder(orderId);
-        return  new ResponseEntity<>(order,HttpStatus.OK);
+    @PutMapping("/{orderId}/confirmed")
+    public ResponseEntity<?> confirmedOrderHandler(@PathVariable Long orderId,
+                                                   @RequestHeader("Authorization") String jwt) {
+        try {
+            Order order = orderService.placedOrder(orderId);
+            return new ResponseEntity<>(order, HttpStatus.OK);
+        } catch (OrderException e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+        } catch (Exception e) {
+            return new ResponseEntity<>("An error occurred while confirming the order.", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 }
