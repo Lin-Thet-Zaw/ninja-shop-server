@@ -37,7 +37,8 @@ public class AppConfig {
                                 "http://localhost:4200",
                                 "https://ninjashop-ecommerceappfrontend.vercel.app",
                                 "https://ninja-shop.vercel.app",
-                                "https://ecommerce-woad-omega-55.vercel.app"
+                                "https://ecommerce-woad-omega-55.vercel.app",
+                                "https://ecommerce-server-production-a391.up.railway.app"
                         ));
                         cfg.setAllowedMethods(Collections.singletonList("*"));
                         cfg.setAllowCredentials(true);
