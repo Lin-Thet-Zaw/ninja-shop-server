@@ -13,8 +13,8 @@ public class Order {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
 
-    @Column(name = "order_id")
-    private String orderId;
+    @Column(name = "track_id")
+    private String trackId;
 
     @ManyToOne
     private User user;
@@ -47,9 +47,9 @@ public class Order {
     public Order() {
     }
 
-    public Order(Long id, String orderId, User user, List<OrderItem> orderItemList, LocalDateTime orderDate, LocalDateTime deliveryDate, Address shippingAddress, PaymentDetail paymentDetails, double totalPrice, Integer totalDiscountPrice, Integer discounted, String orderStatus, int totalItem, LocalDateTime createdAt) {
+    public Order(Long id, String trackId, User user, List<OrderItem> orderItemList, LocalDateTime orderDate, LocalDateTime deliveryDate, Address shippingAddress, PaymentDetail paymentDetails, double totalPrice, Integer totalDiscountPrice, Integer discounted, String orderStatus, int totalItem, LocalDateTime createdAt) {
         this.id = id;
-        this.orderId = orderId;
+        this.trackId = trackId;
         this.user = user;
         this.orderItemList = orderItemList;
         this.orderDate = orderDate;
@@ -72,12 +72,12 @@ public class Order {
         this.id = id;
     }
 
-    public String getOrderId() {
-        return orderId;
+    public String getTrackId() {
+        return trackId;
     }
 
-    public void setOrderId(String orderId) {
-        this.orderId = orderId;
+    public void setTrackId(String trackId) {
+        this.trackId = trackId;
     }
 
     public User getUser() {

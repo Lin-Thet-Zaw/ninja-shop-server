@@ -18,7 +18,7 @@ public class AdminOrderController {
     private OrderService orderService;
 
     @GetMapping("/")
-    public ResponseEntity<List<Order>> getAllOrderHandler(){
+    public ResponseEntity<List<Order>> getAllOrderHandler() throws OrderException {
         List<Order> orders = orderService.getAllOrder();
         return new ResponseEntity<>(orders, HttpStatus.ACCEPTED);
     }
