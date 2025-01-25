@@ -13,7 +13,7 @@ import java.util.Optional;
 import java.util.Random;
 
 @Service
-public class OrderServiceImplementation implements OrderService {
+public class orderServiceImplementation implements OrderService {
     @Autowired
     private OrderRepository orderRepository;
     @Autowired
@@ -27,7 +27,7 @@ public class OrderServiceImplementation implements OrderService {
     @Autowired
     private OrderItemRepository orderItemRepository;
 
-    public OrderServiceImplementation(OrderRepository orderRepository, CartService cartService, AddressRepository addressRepository, UserRepository userRepository, OrderItemService orderItemService, OrderItemRepository orderItemRepository) {
+    public orderServiceImplementation(OrderRepository orderRepository, CartService cartService, AddressRepository addressRepository, UserRepository userRepository, OrderItemService orderItemService, OrderItemRepository orderItemRepository) {
         this.orderRepository = orderRepository;
         this.cartService = cartService;
         this.addressRepository = addressRepository;

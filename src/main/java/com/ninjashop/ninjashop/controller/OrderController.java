@@ -1,79 +1,195 @@
-package com.ninjashop.ninjashop.controller;
+package com.ninjashop.ninjashop.service;
 
 import com.ninjashop.ninjashop.exception.OrderException;
-import com.ninjashop.ninjashop.exception.UserException;
-import com.ninjashop.ninjashop.model.Address;
-import com.ninjashop.ninjashop.model.Order;
-import com.ninjashop.ninjashop.model.User;
-import com.ninjashop.ninjashop.service.OrderService;
-import com.ninjashop.ninjashop.service.UserService;
+import com.ninjashop.ninjashop.model.*;
+import com.ninjashop.ninjashop.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import java.util.Random;
 
-@RestController
-@RequestMapping("/api/orders")
-public class OrderController {
+@Service
+public class OrderServiceImplementation implements OrderService {
     @Autowired
-    private OrderService orderService;
+    private OrderRepository orderRepository;
     @Autowired
-    private UserService userService;
+    private CartService cartService;
+    @Autowired
+    private AddressRepository addressRepository;
+    @Autowired
+    private UserRepository userRepository;
+    @Autowired
+    private OrderItemService orderItemService;
+    @Autowired
+    private OrderItemRepository orderItemRepository;
 
-    @PostMapping("/")
-    public ResponseEntity<?> createOrder(@RequestBody Address shippingAddress,
-                                         @RequestHeader("Authorization") String jwt) {
+    public OrderServiceImplementation(OrderRepository orderRepository, CartService cartService, AddressRepository addressRepository, UserRepository userRepository, OrderItemService orderItemService, OrderItemRepository orderItemRepository) {
+        this.orderRepository = orderRepository;
+        this.cartService = cartService;
+        this.addressRepository = addressRepository;
+        this.userRepository = userRepository;
+        this.orderItemService = orderItemService;
+        this.orderItemRepository = orderItemRepository;
+    }
+
+    private String generateOrderTrackingCode() {
+        Random random = new Random();
+        String code;
+        do {
+            code = String.valueOf(random.nextInt(90000000) + 10000000); // Generates a random 8-digit number
+        } while (orderRepository.findByOrderId(code).isPresent()); // Check if the code already exists
+        return code;
+    }
+
+    @Override
+    public Order createOrder(User user, Address shippingAddress) throws OrderException {
         try {
-            User user = userService.findUserProfileByJwt(jwt);
-            Order order = orderService.createOrder(user, shippingAddress);
-            System.out.println(order);
-            return new ResponseEntity<>(order, HttpStatus.CREATED);
-        } catch (UserException e) {
-            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+            shippingAddress.setUser(user);
+            Address address = addressRepository.save(shippingAddress);
+            user.getAddresses().add(address);
+            userRepository.save(user);
+            Cart cart = cartService.findUserCart(user.getId());
+
+            List<OrderItem> orderItems = new ArrayList<>();
+            for (CartItem item : cart.getCartItems()) {
+                OrderItem orderItem = new OrderItem();
+                orderItem.setPrice(item.getPrice());
+                orderItem.setProduct(item.getProduct());
+                orderItem.setQuentity(item.getQuantity());
+                orderItem.setSize(item.getSize());
+                orderItem.setUserId(item.getUserId());
+                orderItem.setDescountedPrice(item.getDiscountedPrice());
+
+                OrderItem createOrderItem = orderItemRepository.save(orderItem);
+                orderItems.add(createOrderItem);
+            }
+
+            Order createdOrder = new Order();
+            createdOrder.setUser(user);
+            createdOrder.setOrderItemList(orderItems);
+            createdOrder.setTotalPrice(cart.getTotalPrice());
+            createdOrder.setDiscounted(cart.getDiscounted());
+            createdOrder.setTotalDiscountPrice(cart.getTotalDiscountedPrice());
+            createdOrder.setTotalItem(cart.getTotalItem());
+            createdOrder.setShippingAddress(address);
+            createdOrder.setOrderDate(LocalDateTime.now());
+            createdOrder.setOrderStatus("PENDING");
+            createdOrder.getPaymentDetails().setStatus("PENDING");
+            createdOrder.setCreatedAt(LocalDateTime.now());
+
+            // Generate and set the order tracking code
+            createdOrder.setOrderId(generateOrderTrackingCode());
+
+            Order savedOrder = orderRepository.save(createdOrder);
+
+            for (OrderItem item : orderItems) {
+                item.setOrder(savedOrder);
+                orderItemRepository.save(item);
+            }
+            return savedOrder;
         } catch (Exception e) {
-            return new ResponseEntity<>("An error occurred while creating the order.", HttpStatus.INTERNAL_SERVER_ERROR);
+            throw new OrderException("An error occurred while creating the order: " + e.getMessage());
         }
     }
 
-    @GetMapping("/user")
-    public ResponseEntity<?> userOrderHistoryLists(@RequestHeader("Authorization") String jwt) {
+    @Override
+    public Order findOrderById(Long orderId) throws OrderException {
         try {
-            User user = userService.findUserProfileByJwt(jwt);
-            List<Order> orders = orderService.userOrderHistoryLists(user.getId());
-            return new ResponseEntity<>(orders, HttpStatus.OK);
-        } catch (UserException e) {
-            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+            Optional<Order> opt = orderRepository.findById(orderId);
+            if (opt.isPresent()) {
+                return opt.get();
+            }
+            throw new OrderException("Order Not Found");
         } catch (Exception e) {
-            return new ResponseEntity<>("An error occurred while fetching the order history.", HttpStatus.INTERNAL_SERVER_ERROR);
+            throw new OrderException("An error occurred while finding the order: " + e.getMessage());
         }
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<?> findOrderById(@PathVariable("id") Long orderId,
-                                           @RequestHeader("Authorization") String jwt) {
+    @Override
+    public List<Order> userOrderHistoryLists(Long userId) throws OrderException {
         try {
-            User user = userService.findUserProfileByJwt(jwt);
-            Order order = orderService.findOrderById(orderId);
-            return new ResponseEntity<>(order, HttpStatus.OK);
-        } catch (UserException | OrderException e) {
-            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+            return orderRepository.getUsersOrders(userId);
         } catch (Exception e) {
-            return new ResponseEntity<>("An error occurred while fetching the order.", HttpStatus.INTERNAL_SERVER_ERROR);
+            throw new OrderException("An error occurred while fetching the user's order history: " + e.getMessage());
         }
     }
 
-    @PutMapping("/{orderId}/confirmed")
-    public ResponseEntity<?> confirmedOrderHandler(@PathVariable Long orderId,
-                                                   @RequestHeader("Authorization") String jwt) {
+    @Override
+    public Order placedOrder(Long orderId) throws OrderException {
         try {
-            Order order = orderService.placedOrder(orderId);
-            return new ResponseEntity<>(order, HttpStatus.OK);
-        } catch (OrderException e) {
-            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+            Order order = findOrderById(orderId);
+            order.setOrderStatus("PLACED");
+            order.getPaymentDetails().setStatus("COMPLETED");
+            return orderRepository.save(order);
         } catch (Exception e) {
-            return new ResponseEntity<>("An error occurred while confirming the order.", HttpStatus.INTERNAL_SERVER_ERROR);
+            throw new OrderException("An error occurred while placing the order: " + e.getMessage());
+        }
+    }
+
+    @Override
+    public Order orderComfired(Long orderId) throws OrderException {
+        try {
+            Order order = findOrderById(orderId);
+            order.setOrderStatus("CONFIRMED");
+            return orderRepository.save(order);
+        } catch (Exception e) {
+            throw new OrderException("An error occurred while confirming the order: " + e.getMessage());
+        }
+    }
+
+    @Override
+    public Order shippedOrder(Long orderId) throws OrderException {
+        try {
+            Order order = findOrderById(orderId);
+            order.setOrderStatus("SHIPPED");
+            return orderRepository.save(order);
+        } catch (Exception e) {
+            throw new OrderException("An error occurred while shipping the order: " + e.getMessage());
+        }
+    }
+
+    @Override
+    public Order deliveredOrder(Long orderId) throws OrderException {
+        try {
+            Order order = findOrderById(orderId);
+            order.setOrderStatus("DELIVERED");
+            return orderRepository.save(order);
+        } catch (Exception e) {
+            throw new OrderException("An error occurred while delivering the order: " + e.getMessage());
+        }
+    }
+
+    @Override
+    public Order cancelOrder(Long orderId) throws OrderException {
+        try {
+            Order order = findOrderById(orderId);
+            order.setOrderStatus("CANCELLED");
+            return orderRepository.save(order);
+        } catch (Exception e) {
+            throw new OrderException("An error occurred while canceling the order: " + e.getMessage());
+        }
+    }
+
+    @Override
+    public List<Order> getAllOrder() throws OrderException {
+        try {
+            return orderRepository.findAll();
+        } catch (Exception e) {
+            throw new OrderException("An error occurred while fetching all orders: " + e.getMessage());
+        }
+    }
+
+    @Override
+    public void deleteOrder(Long orderId) throws OrderException {
+        try {
+            Order order = findOrderById(orderId);
+            orderRepository.delete(order);
+        } catch (Exception e) {
+            throw new OrderException("An error occurred while deleting the order: " + e.getMessage());
         }
     }
 }

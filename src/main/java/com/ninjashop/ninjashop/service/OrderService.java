@@ -9,14 +9,14 @@ import org.aspectj.weaver.ast.Or;
 import java.util.List;
 
 public interface OrderService {
-    public Order createOrder(User user, Address address);
+    public Order createOrder(User user, Address address) throws OrderException;
     public Order findOrderById(Long orderId) throws OrderException;
-    public List<Order> userOrderHistoryLists(Long userId);
+    public List<Order> userOrderHistoryLists(Long userId) throws OrderException;
     public Order placedOrder(Long orderId) throws OrderException;
     public Order orderComfired(Long orderId) throws OrderException;
     public Order shippedOrder(Long orderId) throws OrderException;
     public Order deliveredOrder(Long orderId) throws OrderException;
     public Order cancelOrder(Long orderId) throws OrderException;
-    public List<Order> getAllOrder();
+    public List<Order> getAllOrder() throws OrderException;
     public void deleteOrder(Long orderId) throws OrderException;
 }
