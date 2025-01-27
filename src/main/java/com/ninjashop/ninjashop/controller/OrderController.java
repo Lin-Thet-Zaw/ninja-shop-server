@@ -5,11 +5,15 @@ import com.ninjashop.ninjashop.exception.UserException;
 import com.ninjashop.ninjashop.model.Address;
 import com.ninjashop.ninjashop.model.Order;
 import com.ninjashop.ninjashop.model.User;
+import com.ninjashop.ninjashop.request.AddressRequest;
+import com.ninjashop.ninjashop.response.AuthResponse;
 import com.ninjashop.ninjashop.service.OrderService;
 import com.ninjashop.ninjashop.service.UserService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -23,9 +27,14 @@ public class OrderController {
     private UserService userService;
 
     @PostMapping("/")
-    public ResponseEntity<?> createOrder(@RequestBody Address shippingAddress,
-                                         @RequestHeader("Authorization") String jwt) {
+    public ResponseEntity<?> createOrder(@Valid @RequestBody AddressRequest shippingAddress,
+                                         @RequestHeader("Authorization") String jwt, BindingResult bindingResult) {
         try {
+            if (bindingResult.hasErrors()) {
+                StringBuilder errorMessage = new StringBuilder("Error");
+                bindingResult.getAllErrors().forEach(error -> errorMessage.append(error.getDefaultMessage()).append(" "));
+                return new ResponseEntity<>(new AuthResponse(null, errorMessage.toString()), HttpStatus.BAD_REQUEST);
+            }
             User user = userService.findUserProfileByJwt(jwt);
             Order order = orderService.createOrder(user, shippingAddress);
             System.out.println(order);

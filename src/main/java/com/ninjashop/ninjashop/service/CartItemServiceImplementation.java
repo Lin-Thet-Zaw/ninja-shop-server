@@ -11,6 +11,7 @@ import com.ninjashop.ninjashop.repository.CartRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.Optional;
 
 @Service
@@ -37,8 +38,8 @@ public class CartItemServiceImplementation implements CartItemService {
     @Override
     public CartItem createCartItem(CartItem cartItem) {
         cartItem.setQuantity(1);
-        cartItem.setPrice(cartItem.getProduct().getPrice() * cartItem.getQuantity());
-        cartItem.setDiscountedPrice(cartItem.getProduct().getDiscountedPrice() * cartItem.getQuantity());
+        cartItem.setPrice(cartItem.getProduct().getPrice().multiply(BigDecimal.valueOf(cartItem.getQuantity())));
+        cartItem.setDiscountedPrice(cartItem.getProduct().getDiscountedPrice().multiply(BigDecimal.valueOf(cartItem.getQuantity())));
         return cartItemRepository.save(cartItem);
     }
 
@@ -49,8 +50,8 @@ public class CartItemServiceImplementation implements CartItemService {
 
         if (user.getId().equals(userId)) {
             item.setQuantity(cartItem.getQuantity());
-            item.setPrice(item.getProduct().getPrice() * item.getQuantity());
-            item.setDiscountedPrice(item.getProduct().getDiscountedPrice() * item.getQuantity());
+            item.setPrice(item.getProduct().getPrice().multiply(BigDecimal.valueOf(item.getQuantity())));
+            item.setDiscountedPrice(item.getProduct().getDiscountedPrice().multiply(BigDecimal.valueOf(item.getQuantity())));
         }
         return cartItemRepository.save(item);
     }

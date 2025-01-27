@@ -3,6 +3,8 @@ package com.ninjashop.ninjashop.service;
 import com.ninjashop.ninjashop.exception.OrderException;
 import com.ninjashop.ninjashop.model.*;
 import com.ninjashop.ninjashop.repository.*;
+import com.ninjashop.ninjashop.request.AddressRequest;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -58,29 +60,50 @@ public class OrderServiceImplementation implements OrderService {
         }
     }
 
+    private Address convertToAddress(AddressRequest addressRequest, User user) {
+        Address address = new Address();
+        address.setFirstName(addressRequest.getFirstName());
+        address.setLastName(addressRequest.getLastName());
+        address.setStreetAddress(addressRequest.getStreetAddress());
+        address.setCity(addressRequest.getCity());
+        address.setState(addressRequest.getState());
+        address.setZipCode(addressRequest.getZipCode());
+        address.setUser(user); // Set the user for the address
+        return address;
+    }
+
     @Override
-    public Order createOrder(User user, Address shippingAddress) throws OrderException {
+    public Order createOrder(User user, @Valid AddressRequest shippingAddress) throws OrderException {
         try {
-            shippingAddress.setUser(user);
-            Address address = addressRepository.save(shippingAddress);
+            // Convert AddressRequest to Address entity
+            Address address = convertToAddress(shippingAddress, user);
+
+            // Save the address
+            address = addressRepository.save(address);
+
+            // Add the address to the user's address list
             user.getAddresses().add(address);
             userRepository.save(user);
+
+            // Fetch the user's cart
             Cart cart = cartService.findUserCart(user.getId());
 
+            // Create order items from cart items
             List<OrderItem> orderItems = new ArrayList<>();
             for (CartItem item : cart.getCartItems()) {
                 OrderItem orderItem = new OrderItem();
                 orderItem.setPrice(item.getPrice());
                 orderItem.setProduct(item.getProduct());
-                orderItem.setQuentity(item.getQuantity());
+                orderItem.setQuantity(item.getQuantity());
                 orderItem.setSize(item.getSize());
                 orderItem.setUserId(item.getUserId());
-                orderItem.setDescountedPrice(item.getDiscountedPrice());
+                orderItem.setDiscountedPrice(item.getDiscountedPrice());
 
-                OrderItem createOrderItem = orderItemRepository.save(orderItem);
-                orderItems.add(createOrderItem);
+                OrderItem createdOrderItem = orderItemRepository.save(orderItem);
+                orderItems.add(createdOrderItem);
             }
 
+            // Create the order
             Order createdOrder = new Order();
             createdOrder.setUser(user);
             createdOrder.setOrderItemList(orderItems);
@@ -97,12 +120,15 @@ public class OrderServiceImplementation implements OrderService {
             // Generate and set the order tracking code
             createdOrder.setTrackId(generateOrderTrackingCode());
 
+            // Save the order
             Order savedOrder = orderRepository.save(createdOrder);
 
+            // Update order items with the saved order
             for (OrderItem item : orderItems) {
                 item.setOrder(savedOrder);
                 orderItemRepository.save(item);
             }
+
             return savedOrder;
         } catch (Exception e) {
             throw new OrderException("An error occurred while creating the order: " + e.getMessage());

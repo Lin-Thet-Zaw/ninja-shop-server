@@ -2,6 +2,7 @@ package com.ninjashop.ninjashop.model;
 
 import jakarta.persistence.*;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -18,14 +19,14 @@ public class Product {
     @Column(length = 255)
     private String title;
 
-    @Column(length = 255)
+    @Lob
     private String description;
 
 
-    private int price;
+    private BigDecimal price;
 
     @Column(name = "discounted_price")
-    private int discountedPrice;
+    private BigDecimal discountedPrice;
 
     @Column(name = "discounted_percent")
     private int discountedPercent;
@@ -149,19 +150,19 @@ public class Product {
         this.discountedPercent = discountedPercent;
     }
 
-    public int getDiscountedPrice() {
+    public BigDecimal getDiscountedPrice() {
         return discountedPrice;
     }
 
-    public void setDiscountedPrice(int discountedPrice) {
+    public void setDiscountedPrice(BigDecimal discountedPrice) {
         this.discountedPrice = discountedPrice;
     }
 
-    public int getPrice() {
+    public BigDecimal getPrice() {
         return price;
     }
 
-    public void setPrice(int price) {
+    public void setPrice(BigDecimal price) {
         this.price = price;
     }
 
@@ -184,7 +185,7 @@ public class Product {
     @Column(name = "num_ratings")
     private  int numRatins;
 
-    public Product(Long id, String title, String description, int price, int discountedPrice, int discountedPercent, int quantity, String brand, String color, Set<Size> sizes, String imageUrl, List<Rating> ratings, List<Review> reviews, int numRatins, Category category, LocalDateTime createdAt) {
+    public Product(Long id, String title, String description, BigDecimal price, BigDecimal discountedPrice, int discountedPercent, int quantity, String brand, String color, Set<Size> sizes, String imageUrl, List<Rating> ratings, List<Review> reviews, int numRatins, Category category, LocalDateTime createdAt) {
         this.id = id;
         this.title = title;
         this.description = description;

@@ -10,6 +10,8 @@ import com.ninjashop.ninjashop.request.AddItemRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
+
 @Service
 public class CartServiceImplementation implements CartService{
     @Autowired
@@ -43,40 +45,41 @@ public class CartServiceImplementation implements CartService{
         Product product = productService.findProductById(req.getProductId());
         CartItem isPresent = cartItemService.isCartItemExists(cart, product, req.getSize(), userId);
 
-        if(isPresent == null){
-            CartItem cartItem= new CartItem();
+        if (isPresent == null) {
+            CartItem cartItem = new CartItem();
             cartItem.setProduct(product);
             cartItem.setCart(cart);
             cartItem.setQuantity(req.getQuantity());
             cartItem.setUserId(userId);
 
-            int price = req.getQuantity()*product.getDiscountedPrice();
+            // Fix: Use BigDecimal's multiply method
+            BigDecimal price = product.getDiscountedPrice().multiply(BigDecimal.valueOf(req.getQuantity()));
             cartItem.setPrice(price);
             cartItem.setSize(req.getSize());
 
-            CartItem createCartItem =cartItemService.createCartItem(cartItem);
+            CartItem createCartItem = cartItemService.createCartItem(cartItem);
             cart.getCartItems().add(createCartItem);
         }
-        return  "Add Item to Cart";
+        return "Add Item to Cart";
     }
 
     @Override
     public Cart findUserCart(Long userId) {
         Cart cart = cartRepository.findByUserId(userId);
-        int totalPrice= 0;
-        int totalDiscountedPrice = 0;
-        int totalItem=0;
+        BigDecimal totalPrice = BigDecimal.ZERO; // Use BigDecimal for totals
+        BigDecimal totalDiscountedPrice = BigDecimal.ZERO;
+        int totalItem = 0;
 
-        for (CartItem cartItem: cart.getCartItems()){
-            totalPrice= totalPrice + cartItem.getPrice();
-            totalDiscountedPrice = totalDiscountedPrice+cartItem.getDiscountedPrice();
-            totalItem = totalItem +cartItem.getQuantity();
+        for (CartItem cartItem : cart.getCartItems()) {
+            totalPrice = totalPrice.add(cartItem.getPrice());
+            totalDiscountedPrice = totalDiscountedPrice.add(cartItem.getDiscountedPrice());
+            totalItem = totalItem + cartItem.getQuantity();
         }
 
-        cart.setTotalDiscountedPrice(totalDiscountedPrice);
+        cart.setTotalDiscountedPrice(totalDiscountedPrice.intValue()); // Convert to int if needed
         cart.setTotalItem(totalItem);
-        cart.setTotalPrice(totalPrice);
-        cart.setDiscounted(totalPrice-totalDiscountedPrice);
+        cart.setTotalPrice(totalPrice.intValue()); // Convert to int if needed
+        cart.setDiscounted(totalPrice.subtract(totalDiscountedPrice).intValue()); // Calculate discount and convert to int
         return cartRepository.save(cart);
     }
 }

@@ -18,6 +18,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.fasterxml.jackson.core.type.TypeReference;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -33,7 +34,7 @@ public class AdminProductController {
     private UserService userService;
 
     @PostMapping("/")
-    public ResponseEntity<Product> createProduct(
+    public ResponseEntity<?> createProduct(
             @Valid
             @RequestParam("image") String image,
             @RequestParam("brand") String brand,
@@ -47,15 +48,19 @@ public class AdminProductController {
             @RequestParam("secondLevelCategory") String secondLevelCategory,
             @RequestParam("thirdLevelCategory") String thirdLevelCategory,
             @RequestParam("description") String description,
-            @RequestParam("sizes") String sizesJson, // Accept sizes as JSON string
+            @RequestParam("sizes") String sizesJson,
             @RequestHeader("Authorization") String jwt
     ) throws UserException, IOException {
-        // Authenticate user
-        User user = userService.findUserProfileByJwt(jwt);
 
-        // Parse numeric fields with default values
-        int discountedPrice = parseInteger(discountedPriceStr, 0);
-        int price = parseInteger(priceStr, 0);
+        // Authenticate user and check role
+        User user = userService.findUserProfileByJwt(jwt);
+        if (!"admin".equals(user.getRole())) {
+            return new ResponseEntity<>("Unauthorized access", HttpStatus.UNAUTHORIZED);
+        }
+
+        // Parse numeric fields as BigDecimal or int
+        BigDecimal discountedPrice = parseBigDecimal(discountedPriceStr, BigDecimal.ZERO);
+        BigDecimal price = parseBigDecimal(priceStr, BigDecimal.ZERO);
         int discountedPercent = parseInteger(discountedPercentStr, 0);
         int quantity = parseInteger(quantityStr, 0);
 
@@ -75,14 +80,13 @@ public class AdminProductController {
         req.setSecondLevelCategory(secondLevelCategory);
         req.setThirdLevelCategory(thirdLevelCategory);
         req.setDescription(description);
-        req.setSizes(sizes); // Set the sizes directly
-        req.setImageUrl(image); // Save the image path as URL
+        req.setSizes(sizes);
+        req.setImageUrl(image);
 
         // Save product to database
         Product product = productService.createProduct(req);
         return new ResponseEntity<>(product, HttpStatus.CREATED);
     }
-
     private Set<Size> parseSizes(String sizesJson) {
         ObjectMapper objectMapper = new ObjectMapper();
         try {
@@ -91,6 +95,17 @@ public class AdminProductController {
             return new HashSet<>(sizeList);
         } catch (IOException e) {
             throw new RuntimeException("Failed to parse sizes JSON", e);
+        }
+    }
+
+    private BigDecimal parseBigDecimal(String value, BigDecimal defaultValue) {
+        if (value == null || value.trim().isEmpty()) {
+            return defaultValue;
+        }
+        try {
+            return new BigDecimal(value);
+        } catch (NumberFormatException e) {
+            return defaultValue;
         }
     }
 
@@ -187,11 +202,16 @@ public class AdminProductController {
      * Endpoint to delete a product by its ID.
      */
     @DeleteMapping("/{productId}/delete")
-    public ResponseEntity<ApiResponse> deleteProduct(@PathVariable Long productId) throws ProductException {
+    public ResponseEntity<ApiResponse> deleteProduct(@PathVariable Long productId, @RequestHeader("Authorization") String jwt) throws ProductException, UserException {
         productService.deleteProduct(productId);
-        ApiResponse res = new ApiResponse();
-        res.setMessage("Product deleted successfully.");
-        res.setStatus(true);
+        // Authenticate user and check role
+        User user = userService.findUserProfileByJwt(jwt);
+        if (!"admin".equals(user.getRole())) {
+            ApiResponse response = new ApiResponse("Unauthorized access", false);
+            return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
+        }
+
+        ApiResponse res = new ApiResponse("Product deleted successfully.", true);
         return new ResponseEntity<>(res, HttpStatus.OK);
     }
 
@@ -208,9 +228,15 @@ public class AdminProductController {
      * Endpoint to update a product by its ID.
      */
     @PutMapping("/{productId}/update")
-    public ResponseEntity<Product> updateProduct(
+    public ResponseEntity<?> updateProduct(
             @RequestBody Product req,
-            @PathVariable("productId") Long productId) throws ProductException {
+            @PathVariable("productId") Long productId, @RequestHeader("Authorization") String jwt) throws ProductException, UserException {
+        // Authenticate user and check role
+        User user = userService.findUserProfileByJwt(jwt);
+        if (!"admin".equals(user.getRole())) {
+            ApiResponse response = new ApiResponse("Unauthorized access", false);
+            return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
+        }
         Product product = productService.updateProduct(productId, req);
         return new ResponseEntity<>(product, HttpStatus.OK);
     }
@@ -219,9 +245,15 @@ public class AdminProductController {
      * Endpoint to create multiple products at once.
      */
     @PostMapping("/creates")
-    public ResponseEntity<ApiResponse> createMultipleProduct(@RequestBody CreateProductRequest[] req) {
+    public ResponseEntity<ApiResponse> createMultipleProduct(@RequestBody CreateProductRequest[] req,@RequestHeader("Authorization")String jwt) throws UserException {
         for (CreateProductRequest product : req) {
             productService.createProduct(product);
+        }
+        // Authenticate user and check role
+        User user = userService.findUserProfileByJwt(jwt);
+        if (!"admin".equals(user.getRole())) {
+            ApiResponse response = new ApiResponse("Unauthorized access", false);
+            return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
         }
         ApiResponse res = new ApiResponse();
         res.setMessage("Products created successfully.");

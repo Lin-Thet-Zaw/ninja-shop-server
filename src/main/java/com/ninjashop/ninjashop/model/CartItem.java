@@ -3,6 +3,8 @@ package com.ninjashop.ninjashop.model;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 
+import java.math.BigDecimal;
+
 @Entity
 @Table(name = "cart_items")
 public class CartItem {
@@ -20,11 +22,11 @@ public class CartItem {
 
     private String size;
     private int quantity;
-    private Integer price;
-    private Integer discountedPrice;
+    private BigDecimal price;
+    private BigDecimal discountedPrice;
     private Long userId;
 
-    public CartItem(Long id, Cart cart, Product product, String size, int quantity, Integer price, Integer discountedPrice, Long userId) {
+    public CartItem(Long id, Cart cart, Product product, String size, int quantity, BigDecimal price, BigDecimal discountedPrice, Long userId) {
         this.id = id;
         this.cart = cart;
         this.product = product;
@@ -78,19 +80,19 @@ public class CartItem {
         this.quantity = quantity;
     }
 
-    public Integer getPrice() {
+    public BigDecimal getPrice() {
         return price;
     }
 
-    public void setPrice(Integer price) {
+    public void setPrice(BigDecimal price) {
         this.price = price;
     }
 
-    public Integer getDiscountedPrice() {
+    public BigDecimal getDiscountedPrice() {
         return discountedPrice;
     }
 
-    public void setDiscountedPrice(Integer discountedPrice) {
+    public void setDiscountedPrice(BigDecimal discountedPrice) {
         this.discountedPrice = discountedPrice;
     }
 

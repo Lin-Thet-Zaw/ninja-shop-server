@@ -3,6 +3,7 @@ package com.ninjashop.ninjashop.model;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
@@ -23,23 +24,23 @@ public class OrderItem {
 
     private int quentity;
 
-    private Integer descountedPrice;
+    private BigDecimal descountedPrice;
 
     private Long userId;
 
-    private int price;
+    private BigDecimal price;
 
-    public int getPrice() {
+    public BigDecimal getPrice() {
         return price;
     }
 
-    public void setPrice(int price) {
+    public void setPrice(BigDecimal price) {
         this.price = price;
     }
 
     private LocalDateTime createdAt;
 
-    public OrderItem(Long id, Order order, Product product, String size, int quentity, Integer descountedPrice, Long userId, LocalDateTime createdAt) {
+    public OrderItem(Long id, Order order, Product product, String size, int quentity, BigDecimal descountedPrice, Long userId, LocalDateTime createdAt) {
         this.id = id;
         this.order = order;
         this.product = product;
@@ -93,11 +94,11 @@ public class OrderItem {
         this.quentity = quentity;
     }
 
-    public Integer getDescountedPrice() {
+    public BigDecimal getDescountedPrice() {
         return descountedPrice;
     }
 
-    public void setDescountedPrice(Integer descountedPrice) {
+    public void setDescountedPrice(BigDecimal descountedPrice) {
         this.descountedPrice = descountedPrice;
     }
 
@@ -115,5 +116,11 @@ public class OrderItem {
 
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public void setQuantity(int quantity) {
+    }
+
+    public void setDiscountedPrice(BigDecimal discountedPrice) {
     }
 }
