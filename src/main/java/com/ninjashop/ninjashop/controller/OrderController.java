@@ -33,7 +33,7 @@ public class OrderController {
             if (bindingResult.hasErrors()) {
                 StringBuilder errorMessage = new StringBuilder("Error");
                 bindingResult.getAllErrors().forEach(error -> errorMessage.append(error.getDefaultMessage()).append(" "));
-                return new ResponseEntity<>(new AuthResponse(null, errorMessage.toString()), HttpStatus.BAD_REQUEST);
+                return new ResponseEntity<>(errorMessage.toString(), HttpStatus.BAD_REQUEST);
             }
             User user = userService.findUserProfileByJwt(jwt);
             Order order = orderService.createOrder(user, shippingAddress);
