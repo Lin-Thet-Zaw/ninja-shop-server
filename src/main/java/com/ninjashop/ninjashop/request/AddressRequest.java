@@ -30,6 +30,18 @@ public class AddressRequest {
     @Pattern(regexp = "^[0-9]{5}(?:-[0-9]{4})?$", message = "Invalid ZIP code format")
     private String zipCode;
 
+    @NotBlank(message = "Phone number is required")
+    @Size(min = 1, max = 15, message = "Phone number must be between 5 and 50 characters")
+    private String mobile;
+
+    public @NotBlank(message = "Phone number is required") @Size(min = 1, max = 15, message = "Phone number must be between 5 and 50 characters") String getMobile() {
+        return mobile;
+    }
+
+    public void setMobile(@NotBlank(message = "Phone number is required") @Size(min = 1, max = 15, message = "Phone number must be between 5 and 50 characters") String mobile) {
+        this.mobile = mobile;
+    }
+
     public @NotBlank(message = "First name is required") @Size(min = 1, max = 50, message = "First name must be between 1 and 50 characters") String getFirstName() {
         return firstName;
     }
@@ -54,11 +66,11 @@ public class AddressRequest {
         this.streetAddress = streetAddress;
     }
 
-    public @NotBlank(message = "City name is required") @Size(min = 5, max = 50, message = "First city must be between 5 and 50 characters") String getCity() {
+    public @NotBlank(message = "City name is required") @Size(min = 2, max = 50, message = "City must be between 5 and 50 characters") String getCity() {
         return city;
     }
 
-    public void setCity(@NotBlank(message = "City name is required") @Size(min = 5, max = 50, message = "First city must be between 5 and 50 characters") String city) {
+    public void setCity(@NotBlank(message = "City name is required") @Size(min = 2, max = 50, message = "City must be between 5 and 50 characters") String city) {
         this.city = city;
     }
 
