@@ -68,6 +68,7 @@ public class OrderServiceImplementation implements OrderService {
         address.setCity(addressRequest.getCity());
         address.setState(addressRequest.getState());
         address.setZipCode(addressRequest.getZipCode());
+        address.setMobile(addressRequest.getMobile());
         address.setUser(user); // Set the user for the address
         return address;
     }
